@@ -1,13 +1,10 @@
 import React from "react";
-import { Button } from "./shared/Button/Button";
-import LoginForm from "./shared/LoginUser/LoginUser";
+import { ProductList } from "./shared/ProductList/ProductList";
 
 export function App() {
   return (
     <>
-      <h1>Welcome PS</h1>
-      <Button />
-      <LoginForm />
+      <ProductList />
     </>
   );
 }
