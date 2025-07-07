@@ -1,18 +1,20 @@
-import React, { useCallback, useEffect } from "react";
+import React, { Fragment, useCallback, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  fetchProducts,
+  updateProducts,
+} from "../../../redux/features/products/productsSlice";
 
 export const API_URL = "https://fakestoreapi.com/products";
 
 export function useProducts() {
-  const [products, setProducts] = React.useState([]);
+  const dispatch = useDispatch();
+  const state = useSelector((state) => state.products);
+
   useEffect(() => {
-    const fetchProducts = async () => {
-      const response = await fetch(API_URL);
-      const data = await response.json();
-      setProducts(data);
-    };
-    fetchProducts();
+    if (state.status === "idle") dispatch(fetchProducts());
   }, []);
-  return [products, setProducts];
+  return state;
 }
 
 function EditableItemField({ product, fieldName }) {
@@ -80,15 +82,16 @@ function ProductItem({ product, onDelete, onDragStart, onDragOver, onDrop }) {
 }
 
 export function ProductList() {
-  const [products, setProducts] = useProducts();
+  const { items: products, status } = useProducts();
   const [startIndex, setStartIndex] = React.useState(null);
   const [endIndex, setEndIndex] = React.useState(null);
-  if (!products.length) {
+  const dispatch = useDispatch();
+  if (!status === "loading") {
     return <p>Loading products...</p>;
   }
 
   const handleDelete = (id) => () => {
-    setProducts(products.filter((product) => product.id !== id));
+    dispatch(updateProducts(products.filter((product) => product.id !== id)));
   };
 
   const handleDragStart = (id) => (e) => {
@@ -114,7 +117,7 @@ export function ProductList() {
     let temp = cloneProducts[draggedIndex];
     cloneProducts[draggedIndex] = cloneProducts[targetIndex];
     cloneProducts[targetIndex] = temp;
-    setProducts(cloneProducts);
+    dispatch(updateProducts(cloneProducts));
     console.log("Dropped product:", startIndex, "on", endIndex);
     setStartIndex(null);
     setEndIndex(null);
@@ -122,14 +125,15 @@ export function ProductList() {
   return (
     <ul className="product-list">
       {products.map((product) => (
-        <ProductItem
-          key={product.id}
-          product={product}
-          onDelete={handleDelete(product.id)}
-          onDragStart={handleDragStart(product.id)}
-          onDragOver={handleDragOver(product.id)}
-          onDrop={handleDrop}
-        />
+        <Fragment key={product.id}>
+          <ProductItem
+            product={product}
+            onDelete={handleDelete(product.id)}
+            onDragStart={handleDragStart(product.id)}
+            onDragOver={handleDragOver(product.id)}
+            onDrop={handleDrop}
+          />
+        </Fragment>
       ))}
     </ul>
   );
